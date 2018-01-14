@@ -28,31 +28,32 @@ Now that I’ve found the file, I’m publishing it as is at https://taraskaduk.
 
 
 ## How does it work
-I know, I know, good UI needs no explanation. Please pardon my poor design. Finessing the details is something I may work on later. Today, I’m living by “ship daily” (first said by an unknown genius, and recently reminded me by dj patil in some tweet), and so I ship my minimum viable product
+I know, I know, good UI needs no explanation. Please pardon my poor design. Finessing the details is something I may work on later. Today, I’m living by “ship daily”, and so I ship my minimum viable product
 
 So, it works like this. First, you enter your desired figures into the input box. Let’s say, you are guessing a $75/hr rate, and you’re hoping to have 6 billable hours a day, working 5 days a week, 48 weeks a year. You’re hoping to make $100,000 a year in gross income
 
+![](/post/2018-01-shiny-rate/figures/1.png){width=100%}
 
 Now looking at the output pane, the result is not too far from our initial estimate, but we’re slightly off, making only $108,000 instead of $120,000:
-
+![](/post/2018-01-shiny-rate/figures/2.png){width=100%}
 
 How can we get to $120K? Well, the app suggests a few options:
 
-we can bump up our rate to $83/hr
-we can shoot for more than 6 hours billable hours a day (it still says 6, but that’s obviously rounding)
-we could keep the billable hours and the rate the same, but work more days a week
-we can leave all the parameters as they are, but increase the amount of weeks working from 48 to… 53. Bummer, a year only has 52 weeks, therefore this won’t work.
-we could settle for less and keep the $108K
-finally, we could find a compromise by changing every parameter slightly.
+* we can bump up our rate to $83/hr
+* we can shoot for more than 6 hours billable hours a day (it still says 6, but that’s obviously rounding)
+* we could keep the billable hours and the rate the same, but work more days a week
+* we can leave all the parameters as they are, but increase the amount of weeks working from 48 to… 53. Bummer, a year only has 52 weeks, therefore this won’t work.
+* we could settle for less and keep the $108K
+* finally, we could find a compromise by changing every parameter slightly.
+
 Moving the needle on any of these parameters will “stabilize” the system. Watch:
 
+![Changing the rate from $75 to $84/hour](/post/2018-01-shiny-rate/figures/3.png){width=100%}
+![Changing the rate to $80/hour and working 50 weeks a year](/post/2018-01-shiny-rate/figures/3.png){width=100%}
 
-Changing the rate from $75 to $84/hour
-
-Changing the rate to $80/hour and working 50 weeks a year
 That is pretty much it, in a nutshell. I was interested in making this kind dynamic calculation possible. It took me a while, but it works as expected.
 
-The code
+## The code
 Here is a reminder for me: always annotate your code! When I dug it out last week, I could barely understand anything. I still don’t get a solid chunk of it.
 
 I’m going to annotate it as much as I can, with the time I have. Hopefully you can comb through it.
@@ -60,3 +61,8 @@ I’m going to annotate it as much as I can, with the time I have. Hopefully you
 Any improvements? Suggestions? It’s all on Github — you know what to do!
 
 https://github.com/taraskaduk/shiny_app_rate
+
+```{r code=readLines("app.R"), warning= FALSE, eval = FALSE}
+
+```
+

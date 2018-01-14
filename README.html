@@ -31,17 +31,196 @@ tags:
 </div>
 <div id="how-does-it-work" class="section level2">
 <h2>How does it work</h2>
-<p>I know, I know, good UI needs no explanation. Please pardon my poor design. Finessing the details is something I may work on later. Today, I’m living by “ship daily” (first said by an unknown genius, and recently reminded me by dj patil in some tweet), and so I ship my minimum viable product</p>
+<p>I know, I know, good UI needs no explanation. Please pardon my poor design. Finessing the details is something I may work on later. Today, I’m living by “ship daily”, and so I ship my minimum viable product</p>
 <p>So, it works like this. First, you enter your desired figures into the input box. Let’s say, you are guessing a $75/hr rate, and you’re hoping to have 6 billable hours a day, working 5 days a week, 48 weeks a year. You’re hoping to make $100,000 a year in gross income</p>
-<p>Now looking at the output pane, the result is not too far from our initial estimate, but we’re slightly off, making only $108,000 instead of $120,000:</p>
+<div class="figure">
+<img src="/post/2018-01-shiny-rate/figures/1.png" style="width:100.0%" />
+
+</div>
+<p>Now looking at the output pane, the result is not too far from our initial estimate, but we’re slightly off, making only $108,000 instead of $120,000: <img src="/post/2018-01-shiny-rate/figures/2.png" style="width:100.0%" /></p>
 <p>How can we get to $120K? Well, the app suggests a few options:</p>
-<p>we can bump up our rate to $83/hr we can shoot for more than 6 hours billable hours a day (it still says 6, but that’s obviously rounding) we could keep the billable hours and the rate the same, but work more days a week we can leave all the parameters as they are, but increase the amount of weeks working from 48 to… 53. Bummer, a year only has 52 weeks, therefore this won’t work. we could settle for less and keep the $108K finally, we could find a compromise by changing every parameter slightly. Moving the needle on any of these parameters will “stabilize” the system. Watch:</p>
-<p>Changing the rate from $75 to $84/hour</p>
-<p>Changing the rate to $80/hour and working 50 weeks a year That is pretty much it, in a nutshell. I was interested in making this kind dynamic calculation possible. It took me a while, but it works as expected.</p>
-<p>The code Here is a reminder for me: always annotate your code! When I dug it out last week, I could barely understand anything. I still don’t get a solid chunk of it.</p>
+<ul>
+<li>we can bump up our rate to $83/hr</li>
+<li>we can shoot for more than 6 hours billable hours a day (it still says 6, but that’s obviously rounding)</li>
+<li>we could keep the billable hours and the rate the same, but work more days a week</li>
+<li>we can leave all the parameters as they are, but increase the amount of weeks working from 48 to… 53. Bummer, a year only has 52 weeks, therefore this won’t work.</li>
+<li>we could settle for less and keep the $108K</li>
+<li>finally, we could find a compromise by changing every parameter slightly.</li>
+</ul>
+<p>Moving the needle on any of these parameters will “stabilize” the system. Watch:</p>
+<p><img src="/post/2018-01-shiny-rate/figures/3.png" alt="Changing the rate from $75 to $84/hour" style="width:100.0%" /> <img src="/post/2018-01-shiny-rate/figures/3.png" alt="Changing the rate to $80/hour and working 50 weeks a year" style="width:100.0%" /></p>
+<p>That is pretty much it, in a nutshell. I was interested in making this kind dynamic calculation possible. It took me a while, but it works as expected.</p>
+</div>
+<div id="the-code" class="section level2">
+<h2>The code</h2>
+<p>Here is a reminder for me: always annotate your code! When I dug it out last week, I could barely understand anything. I still don’t get a solid chunk of it.</p>
 <p>I’m going to annotate it as much as I can, with the time I have. Hopefully you can comb through it.</p>
 <p>Any improvements? Suggestions? It’s all on Github — you know what to do!</p>
 <p><a href="https://github.com/taraskaduk/shiny_app_rate" class="uri">https://github.com/taraskaduk/shiny_app_rate</a></p>
+<pre class="r"><code>library(ggplot2)
+library(dplyr)
+library(tibble)
+library(dplyr)
+library(shiny)
+library(rsconnect)
+library(scales)
+
+
+# UI ----------------------------------------------------------------------
+
+ui &lt;- fluidPage(
+  headerPanel(&#39;Hourly rate calculator by Taras Kaduk&#39;),
+  sidebarPanel(
+
+    # I should have probably parametirized the mins and maxs.
+    sliderInput(&#39;iRate&#39;, &#39;Rate&#39;, 70,
+                min = 50, max = 200),
+    sliderInput(&#39;iHours&#39;, &#39;Hours&#39;, 8,
+                min = 5, max = 12),
+    sliderInput(&#39;iDays&#39;, &#39;Days&#39;, 5,
+                min = 4 , max = 7),
+    sliderInput(&#39;iWeeks&#39;, &#39;Weeks&#39;, 48,
+                min = 42, max = 52),
+    sliderInput(&#39;iIncome&#39;, &#39;Income&#39;, 145000,
+                min = 55000, max = 200000, step = 1000)
+  ),
+  mainPanel(
+    plotOutput(&#39;plot1&#39;, width = 600, height = 450),
+    plotOutput(&#39;plot2&#39;, width = 600, height = 100)
+  )
+)
+
+
+# Server ------------------------------------------------------------------
+
+server &lt;- function(input, output) {
+  
+  #These are initial inputs
+  iRate &lt;- reactive({input$iRate})
+  iHours &lt;- 10
+  iDays &lt;- 7
+  iWeeks &lt;- 48
+  iIncome &lt;- 145000
+  
+  # Colors
+  col_need &lt;- &#39;red4&#39;
+  col_value &lt;- &#39;grey30&#39;
+  
+  # Calculating annual income based on inputs.
+  # BTW, what is all this reactive({ }) stuff? Shiny syntax baby!
+  calcIncome &lt;- reactive({input$iRate * input$iHours  * input$iDays * input$iWeeks})
+  
+  # Creating a vector with input variables.
+  # Why vector? I don&#39;t remember.
+  # Tried switching to a data frame and failed.
+  vInput &lt;- reactive({
+    c(&quot;Rate&quot; = input$iRate, 
+      &quot;Hours&quot; = input$iHours, 
+      &quot;Days&quot; = input$iDays, 
+      &quot;Weeks&quot; = input$iWeeks, 
+      &quot;Income&quot; = calcIncome())
+  })
+  
+  # Another 2 vectors, this time for min &amp; max.
+  # Still wondering why these are not in a dataframe...
+  vMin &lt;- as.integer(c(50,6,4,40,55000))
+  vMax &lt;- as.integer(c(200,12,7,52,200000))
+  
+  # OK, now compiling it all into a dataframe. 
+  # I swear I&#39;m not sure why I haven&#39;t started with a data frame...
+  df &lt;- reactive({data_frame(Param = names(vInput()), 
+                             Value = vInput(), 
+                             Min = vMin, 
+                             Max = vMax, 
+                             
+                             ## this line below calculates how much you NEED of the current param,
+                             ## ...all other things being equal
+                             Need = as.integer(input$iIncome/(calcIncome()/vInput())),
+                             
+                             ## next 4 lines take the real value and scale them to fit into 1 graph
+                             ## you don&#39;t want days and hours to be displayed to scale with weeks and...
+                             ## ...hundreds of thousands of dollars
+                             normNeed = 0,
+                             normMin = (vMin - input$iIncome/(calcIncome()/vInput()))/(vMax - vMin),
+                             normMax = (vMax - input$iIncome/(calcIncome()/vInput()))/(vMax - vMin),
+                             normValue = (vMin - input$iIncome/(calcIncome()/vInput()))/
+                                         (vMax - vMin) + 
+                                         ((vInput()-vMin))/(vMax - vMin)
+  )})
+  
+  # OK, I added this piece of code recently.
+  # I wanted to break out the initial data frame.
+  # Otherwise, the total income looked weird on the graph. 
+  # It was, like, reversed to the other params
+  df2 &lt;- reactive({df() %&gt;% filter(Param != &#39;Income&#39;)})
+  df3 &lt;- reactive({df() %&gt;% filter(Param == &#39;Income&#39;)})
+  
+  
+  # Building the plot. Plot1 - plot of all params BUT the annual income
+  output$plot1 &lt;- renderPlot({
+    ggplot(df2(), aes(x = factor(Param, levels = c(&quot;Weeks&quot;, &quot;Days&quot;, &quot;Hours&quot;, &quot;Rate&quot;)))) +
+      
+      # Segment between min and max
+      # Basically, the grey lines with 2 points at the ends of each line
+      geom_segment(aes(xend = Param, y = normMin, yend = normMax), size = 1, col = &quot;grey&quot;)+ 
+      geom_point(aes(y = normMax), col = &quot;dark grey&quot;) +
+      geom_point(aes(y = normMin), col = &quot;dark grey&quot;) +
+      geom_text(aes(y = normMin, label = Min), position = position_nudge(x=-0.1, y=0), size = 4, col = &quot;dark grey&quot;)+
+      geom_text(aes(y = normMax, label = Max), position = position_nudge(x=-0.1, y=0), size = 4, col = &quot;dark grey&quot;)+
+      
+      #The &quot;need&quot;. AKA how much it is supposed to be
+      geom_text(aes(y = 0, label = Need), position = position_nudge(x=0.3, y=0.1), size = 6, col = col_need)+
+      geom_point(aes(y = normNeed), size = 4, col = col_need) +      
+      
+      #Your current value
+      geom_point(aes(y = normValue), size = 4, col = col_value) +
+      geom_text(aes(y = normValue, label = Value), position = position_nudge(x=-0.3), size = 6, col = col_value)+
+      
+      xlab(&quot;&quot;)+
+      ylab(&quot;&quot;)+
+      labs(
+        title = &#39;Entered and calculated parameters based on other entered parameters&#39;
+      ) +
+      theme(axis.text.y=element_text(size=14,colour=&quot;#535353&quot;,face=&quot;bold&quot;),
+            axis.text.x = element_blank(),
+            axis.ticks = element_blank()) +
+      coord_flip()
+  })
+  
+  #Plot2 - just the annual income.
+  #Same stuff, only dots are reversed.
+  #Also, $ formatting applied.
+  output$plot2 &lt;- renderPlot({
+    ggplot(df3(), aes(x = Param)) +
+      
+      geom_segment(aes(xend = Param, y = normMin, yend = normMax), size = 1, col = &quot;grey&quot;)+ 
+      geom_point(aes(y = normMax), col = &quot;dark grey&quot;) +
+      geom_point(aes(y = normMin), col = &quot;dark grey&quot;) +
+      geom_text(aes(y = normMin, label = paste0(&#39;$&#39;,comma(Min))), position = position_nudge(x=-0.1, y=0), size = 4, col = &quot;dark grey&quot;)+
+      geom_text(aes(y = normMax, label = paste0(&#39;$&#39;,comma(Max))), position = position_nudge(x=-0.1, y=0), size = 4, col = &quot;dark grey&quot;)+      
+         
+      geom_text(aes(y = 0, label = paste0(&#39;$&#39;,comma(Need))), position = position_nudge(x=0.3, y=0.1), size = 6, col = col_value)+
+      geom_point(aes(y = normNeed), size = 4, col = col_value) +      
+      
+      
+      geom_point(aes(y = normValue), size = 7, col = &#39;red&#39;) +
+      geom_text(aes(y = normValue, label = paste0(&#39;$&#39;,comma(Value))), position = position_nudge(x=-0.3), size = 7, col = &#39;red&#39;)+
+      
+      xlab(&quot;&quot;)+
+      ylab(&quot;&quot;)+
+      labs(
+        title = &#39;Entered and calculated income based on other entered parameters&#39;
+      ) +
+      theme(axis.text.y=element_text(size=14,colour=&quot;#535353&quot;,face=&quot;bold&quot;),
+            axis.text.x = element_blank(),
+            axis.ticks = element_blank()) +
+      coord_flip()
+  })  
+  
+}
+
+# Et voila!
+shinyApp(ui = ui, server = server)</code></pre>
 </div>
 <div class="footnotes">
 <hr />
