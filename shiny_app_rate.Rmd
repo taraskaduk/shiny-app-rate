@@ -24,7 +24,8 @@ The idea is that the user inputs all the values, and then the app suggests how t
 Now that I’ve found the file, I’m publishing it as is at https://taraskaduk.shinyapps.io/rate/. Below is the app, the explanation and the code-through.
 
 ## The app
-<iframe width="1000" height="600" src="https://taraskaduk.shinyapps.io/rate/" frameborder="0"></iframe>^[I must say, it is quite nice to be able to embed my Shiny app here on my site which runs on `blogdown`: my original Medium post wasn't able to do that]
+Here is the app itself, hosted on https://www.shinyapps.io/. (LMK if you don't see the embeded app here: something must have gone wrong)
+<iframe width="1000" height="650" src="https://taraskaduk.shinyapps.io/rate/" frameborder="0"></iframe>^[I must say, it is quite nice to be able to embed my Shiny app here on my site which runs on `blogdown`: my original Medium post wasn't able to do that]
 
 
 ## How does it work
